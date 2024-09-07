@@ -1,0 +1,229 @@
+{% extends "global/Page.html" %}
+{% load otree %}
+
+{% block title %}Let's practice{% endblock %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            width: 60%;
+            margin: auto;
+            text-align: center;
+        }
+        .slider-container {
+            margin-bottom: 20px;
+            position: relative;
+            padding: 10px;
+        }
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .slider-container input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #4CAF50;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+        }
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            background: #4CAF50;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+        }
+        .slider-container input[type="range"]::-ms-thumb {
+            width: 24px;
+            height: 24px;
+            background: #4CAF50;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .slider-container input[type="range"]:focus {
+            opacity: 1;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #ddd;
+        }
+        .results p {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+        }
+        button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<p>
+    On this page, you can try the game you will face during the experiment. <br>
+    In this case, you will decide how much others contribute.
+    This will help you familiarize yourself with the rules and dynamics. <br>
+<b>Press "Next" only if you want to continue and are sure you understand how the game works.</b><br>
+    After <b>5 minutes</b>, the experiment will automatically move forward.
+</p>
+<p><p>
+This is a public goods game with
+        4 players per group (different each time),
+        an endowment of 20,
+        and an efficiency factor of 0.4.
+    </p></p>
+<br>
+<body>
+    <div class="container">
+        <div class="slider-container">
+            <label>Your contribution (from 0 to 20): <span id="contributionValue">0</span></label><br>
+            <input type="range" id="contribution" min="0" max="20" value="0" oninput="updateValue('contribution', 'contributionValue')">
+        </div>
+        <div class="slider-container">
+            <label>Player 2 (from 0 to 20): <span id="contribution2Value">0</span></label><br>
+            <input type="range" id="contribution2" min="0" max="20" value="0" oninput="updateValue('contribution2', 'contribution2Value')">
+        </div>
+        <div class="slider-container">
+            <label>Player 3 (from 0 to 20): <span id="contribution3Value">0</span></label><br>
+            <input type="range" id="contribution3" min="0" max="20" value="0" oninput="updateValue('contribution3', 'contribution3Value')">
+        </div>
+        <div class="slider-container">
+            <label>Player 4 (from 0 to 20): <span id="contribution4Value">0</span></label><br>
+            <input type="range" id="contribution4" min="0" max="20" value="0" oninput="updateValue('contribution4', 'contribution4Value')">
+        </div>
+        <button type="button" onclick="calculateResults()">See results</button>
+        <button type="button" onclick="resetValues()">Reset</button>
+
+        <div class="results" id="results" style="display:none;">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Contribution</th>
+                        <th>Payoff</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>You</td>
+                        <td id="contributionDisplay">0</td>
+                        <td id="payoffDisplay"></td>
+                    </tr>
+                    <tr>
+                        <td>Player 2</td>
+                        <td id="contribution2Display">0</td>
+                        <td id="payoff2Display"></td>
+                    </tr>
+                    <tr>
+                        <td>Player 3</td>
+                        <td id="contribution3Display">0</td>
+                        <td id="payoff3Display"></td>
+                    </tr>
+                    <tr>
+                        <td>Player 4</td>
+                        <td id="contribution4Display">0</td>
+                        <td id="payoff4Display"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const endowment = 20;
+        const multiplier = 1.6;
+
+        function updateValue(sliderId, spanId) {
+            const value = document.getElementById(sliderId).value;
+            document.getElementById(spanId).innerText = value;
+        }
+
+        function calculateResults() {
+            const contribution = parseFloat(document.getElementById('contribution').value);
+            const contribution2 = parseFloat(document.getElementById('contribution2').value);
+            const contribution3 = parseFloat(document.getElementById('contribution3').value);
+            const contribution4 = parseFloat(document.getElementById('contribution4').value);
+
+            const totalContributions = contribution + contribution2 + contribution3 + contribution4;
+            const individualShare = totalContributions * multiplier / 4;
+
+            const payoff = endowment - contribution + individualShare;
+            const payoff2 = endowment - contribution2 + individualShare;
+            const payoff3 = endowment - contribution3 + individualShare;
+            const payoff4 = endowment - contribution4 + individualShare;
+
+            document.getElementById('contributionDisplay').innerText = contribution.toFixed(2);
+            document.getElementById('payoffDisplay').innerText = payoff.toFixed(2);
+            document.getElementById('contribution2Display').innerText = contribution2.toFixed(2);
+            document.getElementById('payoff2Display').innerText = payoff2.toFixed(2);
+            document.getElementById('contribution3Display').innerText = contribution3.toFixed(2);
+            document.getElementById('payoff3Display').innerText = payoff3.toFixed(2);
+            document.getElementById('contribution4Display').innerText = contribution4.toFixed(2);
+            document.getElementById('payoff4Display').innerText = payoff4.toFixed(2);
+
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function resetValues() {
+            document
