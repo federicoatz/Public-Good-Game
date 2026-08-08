@@ -1,0 +1,153 @@
+{% extends "global/Page.html" %}
+{% load otree %}
+
+{% block title %}Let's practice{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'global/practice.css' %}">
+
+<div class="pgg">
+    <div class="pgg-container">
+
+        <div class="pgg-intro">
+            <h2>Let's practice</h2>
+            <p>
+                On this page, you can try the game you will face during the experiment.
+                In this case, <b>you decide how much everyone contributes</b> &mdash; both your own contribution
+                and those of the three other (simulated) players. This will help you get familiar with the rules
+                and how payoffs are calculated.
+            </p>
+            <div class="pgg-facts">
+                <span class="pgg-fact">4 players per group</span>
+                <span class="pgg-fact">Endowment: {{ C.ENDOWMENT }}</span>
+                <span class="pgg-fact">Efficiency factor: {{ C.EFFICIENCY_FACTOR }}</span>
+                <span class="pgg-fact">5-minute timeout</span>
+            </div>
+            <p style="margin-bottom:0;">
+                Press <b>"Next"</b> only if you want to continue and are sure you understand how the game works.
+                After 5 minutes, the experiment will automatically move forward.
+            </p>
+        </div>
+
+        <div class="pgg-card">
+            <label>Your contribution (0&ndash;20) <span class="value" id="contributionValue">0</span></label>
+            <input type="range" id="contribution" min="0" max="20" value="0" step="1"
+                   oninput="updateSlider('contribution', 'contributionValue')">
+        </div>
+        <div class="pgg-card">
+            <label>Player 2 (0&ndash;20) <span class="value" id="contribution2Value">0</span></label>
+            <input type="range" id="contribution2" min="0" max="20" value="0" step="1"
+                   oninput="updateSlider('contribution2', 'contribution2Value')">
+        </div>
+        <div class="pgg-card">
+            <label>Player 3 (0&ndash;20) <span class="value" id="contribution3Value">0</span></label>
+            <input type="range" id="contribution3" min="0" max="20" value="0" step="1"
+                   oninput="updateSlider('contribution3', 'contribution3Value')">
+        </div>
+        <div class="pgg-card">
+            <label>Player 4 (0&ndash;20) <span class="value" id="contribution4Value">0</span></label>
+            <input type="range" id="contribution4" min="0" max="20" value="0" step="1"
+                   oninput="updateSlider('contribution4', 'contribution4Value')">
+        </div>
+
+        <div class="pgg-actions">
+            <button type="button" class="pgg-btn" onclick="calculateResults()">See results</button>
+            <button type="button" class="pgg-btn secondary" onclick="resetValues()">Reset</button>
+        </div>
+
+        <div class="pgg-card pgg-results" id="results" style="display:none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Contribution</th>
+                        <th>Payoff</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>You</td>
+                        <td id="contributionDisplay">0</td>
+                        <td id="payoffDisplay"></td>
+                    </tr>
+                    <tr>
+                        <td>Player 2</td>
+                        <td id="contribution2Display">0</td>
+                        <td id="payoff2Display"></td>
+                    </tr>
+                    <tr>
+                        <td>Player 3</td>
+                        <td id="contribution3Display">0</td>
+                        <td id="payoff3Display"></td>
+                    </tr>
+                    <tr>
+                        <td>Player 4</td>
+                        <td id="contribution4Display">0</td>
+                        <td id="payoff4Display"></td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td>Total</td>
+                        <td id="totalContributionDisplay">0</td>
+                        <td id="totalPayoffDisplay">0</td>
+                    </tr>
+                </tfoot>
+            </table>
+            <p class="pgg-hint">
+                Payoff = (endowment &minus; your contribution) + (efficiency factor &times; total group contribution).
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const ENDOWMENT = {{ C.ENDOWMENT }};
+    const EFFICIENCY_FACTOR = {{ C.EFFICIENCY_FACTOR }};
+    const SLIDER_IDS = ['contribution', 'contribution2', 'contribution3', 'contribution4'];
+
+    function paintSliderTrack(sliderId) {
+        const slider = document.getElementById(sliderId);
+        const min = Number(slider.min);
+        const max = Number(slider.max);
+        const pct = ((Number(slider.value) - min) / (max - min)) * 100;
+        slider.style.background =
+            `linear-gradient(to right, var(--accent) ${pct}%, var(--border) ${pct}%)`;
+    }
+
+    function updateSlider(sliderId, spanId) {
+        document.getElementById(spanId).innerText = document.getElementById(sliderId).value;
+        paintSliderTrack(sliderId);
+    }
+
+    function calculateResults() {
+        const contributions = SLIDER_IDS.map(id => parseFloat(document.getElementById(id).value));
+        const totalContributions = contributions.reduce((sum, c) => sum + c, 0);
+        const individualShare = totalContributions * EFFICIENCY_FACTOR;
+
+        const payoffs = contributions.map(c => ENDOWMENT - c + individualShare);
+        const totalPayoff = payoffs.reduce((sum, p) => sum + p, 0);
+
+        const suffixes = ['', '2', '3', '4'];
+        suffixes.forEach((suffix, i) => {
+            document.getElementById(`contribution${suffix}Display`).innerText = contributions[i].toFixed(2);
+            document.getElementById(`payoff${suffix}Display`).innerText = payoffs[i].toFixed(2);
+        });
+        document.getElementById('totalContributionDisplay').innerText = totalContributions.toFixed(2);
+        document.getElementById('totalPayoffDisplay').innerText = totalPayoff.toFixed(2);
+
+        document.getElementById('results').style.display = 'block';
+    }
+
+    function resetValues() {
+        SLIDER_IDS.forEach((id, i) => {
+            const suffix = ['', '2', '3', '4'][i];
+            document.getElementById(id).value = 0;
+            updateSlider(id, `contribution${suffix}Value`);
+        });
+        document.getElementById('results').style.display = 'none';
+    }
+
+    SLIDER_IDS.forEach(id => paintSliderTrack(id));
+</script>
+{% endblock %}
